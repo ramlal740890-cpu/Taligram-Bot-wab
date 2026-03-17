@@ -1,69 +1,177 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Refer Erin - User Panel</title>
-    <script src="https://www.gstatic.com/firebasejs/9.1.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.1.1/firebase-firestore-compat.js"></script>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover">
+    <title>Refer & Earn</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <style>
-        :root { --main: #0088cc; --bg: #f8f9fa; }
-        body { font-family: sans-serif; background: var(--bg); margin: 0; padding-bottom: 70px; }
-        header { background: var(--main); color: white; padding: 15px; text-align: center; font-weight: bold; position: sticky; top: 0; z-index: 10; }
-        .tab-content { display: none; padding: 15px; animation: fadeIn 0.3s; }
-        .active-tab { display: block; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .balance-box { background: linear-gradient(135deg, #0088cc, #005f8d); color: white; text-align: center; padding: 25px; }
-        .btn { background: var(--main); color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; }
-        .status { float: right; font-size: 11px; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; }
-        .pending { background: #fff3cd; color: #856404; }
-        .approved { background: #d4edda; color: #155724; }
-        .bottom-nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; border-top: 1px solid #eee; padding: 10px 0; }
-        .nav-item { flex: 1; text-align: center; font-size: 11px; color: #888; cursor: pointer; }
-        .nav-item.active { color: var(--main); font-weight: bold; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+            padding-bottom: 20px;
+        }
+        .container { max-width: 400px; margin: 0 auto; padding: 20px; }
+        .header { 
+            text-align: center; 
+            color: white; 
+            margin-bottom: 30px;
+            position: relative;
+        }
+        .header h1 { font-size: 24px; font-weight: 700; margin-bottom: 10px; }
+        .balance { 
+            background: rgba(255,255,255,0.95); 
+            border-radius: 20px; 
+            padding: 20px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+        }
+        .balance-coins { font-size: 32px; font-weight: 800; color: #f39c12; }
+        .tab-nav { 
+            display: flex; 
+            background: rgba(255,255,255,0.95); 
+            border-radius: 15px; 
+            margin: 20px 0; 
+            overflow: hidden;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        .tab-btn { 
+            flex: 1; 
+            padding: 15px; 
+            background: none; 
+            border: none; 
+            font-size: 14px; 
+            font-weight: 600; 
+            cursor: pointer; 
+            transition: all 0.3s;
+        }
+        .tab-btn.active { background: #0088cc; color: white; }
+        .tab-content { display: none; animation: fadeIn 0.3s; }
+        .tab-content.active { display: block; }
+        .card { 
+            background: rgba(255,255,255,0.95); 
+            border-radius: 15px; 
+            padding: 20px; 
+            margin-bottom: 15px; 
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+        .btn { 
+            width: 100%; 
+            padding: 15px; 
+            border: none; 
+            border-radius: 12px; 
+            font-size: 16px; 
+            font-weight: 600; 
+            cursor: pointer; 
+            transition: all 0.3s;
+            margin-bottom: 10px;
+        }
+        .btn-primary { background: #0088cc; color: white; }
+        .btn-primary:disabled { background: #ccc; cursor: not-allowed; }
+        .btn-secondary { background: #6c757d; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .input { 
+            width: 100%; 
+            padding: 15px; 
+            border: 2px solid #e9ecef; 
+            border-radius: 12px; 
+            font-size: 16px; 
+            margin-bottom: 15px;
+            transition: border-color 0.3s;
+        }
+        .input:focus { outline: none; border-color: #0088cc; }
+        .referral-link { 
+            background: #f8f9fa; 
+            padding: 15px; 
+            border-radius: 12px; 
+            font-family: monospace; 
+            word-break: break-all;
+            margin: 10px 0;
+        }
+        .task-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: #f8f9fa; border-radius: 12px; margin-bottom: 10px; }
+        .history-item { display: flex; justify-content: space-between; padding: 15px; background: #f8f9fa; border-radius: 12px; margin-bottom: 10px; }
+        .status { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .status.pending { background: #fff3cd; color: #856404; }
+        .status.approved { background: #d4edda; color: #155724; }
+        .status.rejected { background: #f8d7da; color: #721c24; }
+        .countdown { color: #ff6b6b; font-weight: 600; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .loading { display: inline-block; width: 20px; height: 20px; border: 3px solid #f3f3f3; border-top: 3px solid #0088cc; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
-
-    <header id="h-title">Refer Erin Dashboard</header>
-
-    <div id="home" class="tab-content active-tab">
-        <div class="card balance-box">
-            <p>Your Balance</p>
-            <h1 id="user-coins">0</h1>
+    <div class="container">
+        <div class="header">
+            <h1>💰 Refer & Earn</h1>
+            <div class="balance">
+                <div>Coins: <span id="coinBalance" class="balance-coins">0</span></div>
+                <div style="font-size: 14px; color: #666; margin-top: 5px;">Updated in real-time</div>
+            </div>
         </div>
-        <div class="card">
-            <p>Referral Link (50 Coins Per Refer):</p>
-            <code id="ref-link" style="display:block; background:#eee; padding:10px; margin-bottom:10px; word-break:break-all;">Loading...</code>
-            <button class="btn" onclick="copyLink()">Copy Link & Invite</button>
+
+        <div class="tab-nav">
+            <button class="tab-btn active" onclick="showTab('home')">🏠 Home</button>
+            <button class="tab-btn" onclick="showTab('refer')">👥 Refer</button>
+            <button class="tab-btn" onclick="showTab('tasks')">📋 Tasks</button>
+            <button class="tab-btn" onclick="showTab('wallet')">💳 Wallet</button>
+        </div>
+
+        <!-- Home Tab -->
+        <div id="home" class="tab-content active">
+            <div class="card">
+                <button id="claimBtn" class="btn btn-primary" onclick="claimBonus()">🎁 Claim Daily Bonus (10 Coins)</button>
+                <div id="bonusStatus" style="text-align: center; margin-top: 10px; font-size: 14px;"></div>
+            </div>
+        </div>
+
+        <!-- Referral Tab -->
+        <div id="refer" class="tab-content">
+            <div class="card">
+                <h3 style="margin-bottom: 15px;">Your Referral Link</h3>
+                <div id="referralLink" class="referral-link"></div>
+                <button class="btn btn-secondary" onclick="copyReferralLink()">📋 Copy Link</button>
+                <div style="text-align: center; margin-top: 15px; padding: 10px; background: #e3f2fd; border-radius: 8px;">
+                    <div style="font-weight: 600; color: #1976d2;">💎 Earn 50 Coins</div>
+                    <div style="font-size: 14px;">Per new user who joins via your link</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tasks Tab -->
+        <div id="tasks" class="tab-content">
+            <div class="card">
+                <h3 style="margin-bottom: 20px;">Complete Tasks & Earn</h3>
+                <div id="tasksList"></div>
+            </div>
+        </div>
+
+        <!-- Wallet Tab -->
+        <div id="wallet" class="tab-content">
+            <div class="card">
+                <h3 style="margin-bottom: 20px;">Withdrawal</h3>
+                <div style="font-size: 14px; color: #666; margin-bottom: 20px;">
+                    Minimum: 1000 Coins
+                </div>
+                <input type="number" id="withdrawAmount" class="input" placeholder="Enter amount (coins)" min="1000">
+                <input type="text" id="upiId" class="input" placeholder="Enter UPI ID (user@paytm)">
+                <button id="withdrawBtn" class="btn btn-success" onclick="requestWithdraw()" disabled>🚀 Request Withdrawal</button>
+            </div>
+            <div class="card">
+                <h3 style="margin-bottom: 20px;">Withdrawal History</h3>
+                <div id="historyList">Loading...</div>
+            </div>
         </div>
     </div>
-
-    <div id="tasks" class="tab-content">
-        <h3>Available Tasks</h3>
-        <div id="task-list">Loading tasks...</div>
-    </div>
-
-    <div id="wallet" class="tab-content">
-        <div class="card">
-            <h3>Withdraw</h3>
-            <input type="number" id="w-amt" placeholder="Amount (Min 1000)" style="width:94%; padding:10px; margin-bottom:10px; border:1px solid #ddd; border-radius:5px;">
-            <input type="text" id="w-upi" placeholder="UPI ID (e.g. name@upi)" style="width:94%; padding:10px; margin-bottom:10px; border:1px solid #ddd; border-radius:5px;">
-            <button class="btn" onclick="requestWithdraw()">Submit Request</button>
-        </div>
-        <h4>History</h4>
-        <div id="w-history"></div>
-    </div>
-
-    <nav class="bottom-nav">
-        <div class="nav-item active" onclick="showTab('home','Dashboard',this)">🏠<br>Home</div>
-        <div class="nav-item" onclick="showTab('tasks','Tasks',this)">📋<br>Tasks</div>
-        <div class="nav-item" onclick="showTab('wallet','Withdraw',this)">💰<br>Wallet</div>
-    </nav>
 
     <script>
+        // Firebase Config - REPLACE WITH YOUR CONFIG
               const firebaseConfig = {
   apiKey: "AIzaSyDpufywuRxIYbOFWWR2HDYdN_SDSrzvGnU",
   authDomain: "refer-erin.firebaseapp.com",
@@ -72,70 +180,185 @@
   messagingSenderId: "98263622377",
   appId: "1:98263622377:web:365ad476abf6a0e20a4678"
 };
+
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-        const tg = window.Telegram.WebApp;
-        tg.expand();
-        const user = tg.initDataUnsafe?.user || { id: "0000", first_name: "Guest" };
 
-        function showTab(id, title, el) {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active-tab'));
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            document.getElementById(id).classList.add('active-tab');
-            document.getElementById('h-title').innerText = title;
-            el.classList.add('active');
+        let currentUserId = '';
+        let userData = {};
+
+        // Telegram WebApp Init
+        window.Telegram.WebApp.ready();
+        window.Telegram.WebApp.expand();
+        window.Telegram.WebApp.MainButton.setText('Refresh Balance').onClick(refreshData).show();
+
+        // Init
+        async function init() {
+            currentUserId = window.Telegram.WebApp.initDataUnsafe.user.id.toString();
+            await loadUserData();
+            await loadTasks();
+            await loadHistory();
+            updateUI();
+            setInterval(refreshData, 5000); // Auto refresh every 5s
         }
 
-        // Real-time Data Sync
-        db.collection('users').doc(user.id.toString()).onSnapshot(doc => {
-            if(doc.exists){
-                document.getElementById('user-coins').innerText = doc.data().coins || 0;
-                document.getElementById('ref-link').innerText = `https://t.me/Refer_Erin_bot?start=${user.id}`;
+        async function loadUserData() {
+            try {
+                const doc = await db.collection('users').doc(currentUserId).get();
+                if (doc.exists) {
+                    userData = doc.data();
+                }
+            } catch (e) {
+                console.error('Error loading user data:', e);
             }
-        });
+        }
 
-        // Load Tasks
-        db.collection('tasks').onSnapshot(snap => {
-            const list = document.getElementById('task-list');
-            list.innerHTML = '';
-            snap.forEach(doc => {
-                const t = doc.data();
-                list.innerHTML += `<div class="card"><b>${t.name}</b><br><small>Reward: ${t.reward}</small><br><br>
-                <button class="btn" onclick="window.open('${t.link}')" style="padding:5px;">Complete</button></div>`;
-            });
-        });
+        function updateUI() {
+            document.getElementById('coinBalance').textContent = userData.coins || 0;
+            
+            // Update bonus status
+            if (userData.lastBonus) {
+                const lastBonus = new Date(userData.lastBonus);
+                const now = new Date();
+                const diff = 24 * 60 * 60 * 1000 - (now - lastBonus);
+                
+                if (diff <= 0) {
+                    document.getElementById('claimBtn').disabled = false;
+                    document.getElementById('claimBtn').textContent = '🎁 Claim Daily Bonus (10 Coins)';
+                    document.getElementById('bonusStatus').innerHTML = '';
+                } else {
+                    document.getElementById('claimBtn').disabled = true;
+                    document.getElementById('claimBtn').textContent = '⏰ Bonus Available Soon';
+                    const hours = Math.ceil(diff / (60 * 60 * 1000));
+                    document.getElementById('bonusStatus').innerHTML = `<span class="countdown">Next bonus in ${hours}h</span>`;
+                }
+            } else {
+                document.getElementById('claimBtn').disabled = false;
+                document.getElementById('claimBtn').textContent = '🎁 Claim Daily Bonus (10 Coins)';
+            }
 
-        // Load Withdrawal History
-        db.collection('withdrawals').where('userId','==',user.id.toString()).onSnapshot(snap => {
-            const hist = document.getElementById('w-history');
-            hist.innerHTML = '';
-            snap.forEach(doc => {
-                const w = doc.data();
-                hist.innerHTML += `<div class="card"><b>${w.amount} Coins</b> <span class="status ${w.status}">${w.status}</span><br><small>${w.upi}</small></div>`;
+            // Update withdrawal button
+            const amount = parseInt(document.getElementById('withdrawAmount').value) || 0;
+            document.getElementById('withdrawBtn').disabled = (userData.coins || 0) < 1000 || amount < 1000;
+
+            // Update referral link
+            document.getElementById('referralLink').textContent = `https://t.me/Refer_Erin_bot?start=${currentUserId}`;
+        }
+
+        async function refreshData() {
+            await loadUserData();
+            updateUI();
+        }
+
+        async function claimBonus() {
+            document.getElementById('claimBtn').innerHTML = '<span class="loading"></span> Claiming...';
+            document.getElementById('claimBtn').disabled = true;
+
+            try {
+                await window.Telegram.WebApp.sendData(JSON.stringify({ action: 'claimBonus' }));
+                setTimeout(refreshData, 2000);
+            } catch (e) {
+                alert('Error claiming bonus');
+            }
+        }
+
+        function copyReferralLink() {
+            const link = document.getElementById('referralLink').textContent;
+            navigator.clipboard.writeText(link).then(() => {
+                window.Telegram.WebApp.showAlert('Referral link copied! 📋');
             });
-        });
+        }
+
+        async function loadTasks() {
+            try {
+                const snapshot = await db.collection('tasks').orderBy('createdAt', 'desc').get();
+                let tasksHtml = '';
+                snapshot.forEach(doc => {
+                    const task = doc.data();
+                    tasksHtml += `
+                        <div class="task-item">
+                            <div>
+                                <div style="font-weight: 600;">${task.name}</div>
+                                <div style="font-size: 14px; color: #666;">+${task.reward} Coins</div>
+                            </div>
+                            <a href="${task.link}" target="_blank" class="btn btn-primary" style="width: auto; padding: 10px 20px; font-size: 14px;">Complete</a>
+                        </div>
+                    `;
+                });
+                document.getElementById('tasksList').innerHTML = tasksHtml || '<div style="text-align: center; color: #999; padding: 40px;">No tasks available</div>';
+            } catch (e) {
+                console.error('Error loading tasks:', e);
+            }
+        }
 
         async function requestWithdraw() {
-            const amt = document.getElementById('w-amt').value;
-            const upi = document.getElementById('w-upi').value;
-            if(amt < 1000) return alert("Minimum 1000 coins required!");
-            if(!upi) return alert("Enter UPI ID");
-            
-            await db.collection('withdrawals').add({
-                userId: user.id.toString(),
-                amount: Number(amt),
-                upi: upi,
-                status: 'pending',
-                createdAt: new Date()
-            });
-            alert("Withdrawal request submitted!");
+            const amount = document.getElementById('withdrawAmount').value;
+            const upi = document.getElementById('upiId').value;
+
+            if (!amount || !upi || parseInt(amount) < 1000) {
+                window.Telegram.WebApp.showAlert('Minimum 1000 coins required');
+                return;
+            }
+
+            document.getElementById('withdrawBtn').innerHTML = '<span class="loading"></span> Requesting...';
+            document.getElementById('withdrawBtn').disabled = true;
+
+            try {
+                await window.Telegram.WebApp.sendData(JSON.stringify({
+                    action: 'withdraw',
+                    amount: amount,
+                    upi: upi
+                }));
+            } catch (e) {
+                alert('Withdrawal request failed');
+            }
         }
 
-        function copyLink() {
-            const link = document.getElementById('ref-link').innerText;
-            navigator.clipboard.writeText(link);
-            alert("Link Copied!");
+        async function loadHistory() {
+            try {
+                const snapshot = await db.collection('withdrawals')
+                    .where('userId', '==', currentUserId)
+                    .orderBy('createdAt', 'desc')
+                    .limit(10)
+                    .get();
+                
+                let historyHtml = '';
+                snapshot.forEach(doc => {
+                    const withdrawal = doc.data();
+                    historyHtml += `
+                        <div class="history-item">
+                            <div>
+                                <div style="font-weight: 600;">${withdrawal.amount} Coins</div>
+                                <div style="font-size: 14px; color: #666;">${withdrawal.upi}</div>
+                            </div>
+                            <span class="status status-${withdrawal.status.toLowerCase()}">${withdrawal.status}</span>
+                        </div>
+                    `;
+                });
+                document.getElementById('historyList').innerHTML = historyHtml || '<div style="text-align: center; color: #999; padding: 40px;">No withdrawal history</div>';
+            } catch (e) {
+                console.error('Error loading history:', e);
+            }
         }
+
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // Event listeners
+        document.getElementById('withdrawAmount').addEventListener('input', function() {
+            const amount = parseInt(this.value) || 0;
+            document.getElementById('withdrawBtn').disabled = (userData.coins || 0) < 1000 || amount < 1000;
+        });
+
+        // Initialize app
+        init();
     </script>
 </body>
 </html>
