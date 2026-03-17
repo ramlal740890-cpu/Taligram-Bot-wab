@@ -3,70 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Refer Erin Bot - User Panel</title>
+    <title>Refer Erin - User Panel</title>
     <script src="https://www.gstatic.com/firebasejs/9.1.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.1.1/firebase-firestore-compat.js"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        :root { --primary: #0088cc; --bg: #f4f4f9; }
+        :root { --main: #0088cc; --bg: #f8f9fa; }
         body { font-family: sans-serif; background: var(--bg); margin: 0; padding-bottom: 70px; }
-        header { background: var(--primary); color: white; padding: 15px; text-align: center; font-weight: bold; position: sticky; top: 0; z-index: 100; }
-        .tab-content { display: none; padding: 20px; }
+        header { background: var(--main); color: white; padding: 15px; text-align: center; font-weight: bold; position: sticky; top: 0; z-index: 10; }
+        .tab-content { display: none; padding: 15px; animation: fadeIn 0.3s; }
         .active-tab { display: block; }
-        .card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .balance-card { background: linear-gradient(135deg, #0088cc, #005580); color: white; text-align: center; padding: 25px; }
-        .btn { background: var(--primary); color: white; border: none; padding: 10px 15px; border-radius: 6px; width: 100%; cursor: pointer; }
-        .bottom-nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; justify-content: space-around; padding: 10px 0; border-top: 1px solid #ddd; }
-        .nav-item { text-align: center; font-size: 0.75rem; color: #888; flex: 1; cursor: pointer; }
-        .nav-item.active { color: var(--primary); }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .balance-box { background: linear-gradient(135deg, #0088cc, #005f8d); color: white; text-align: center; padding: 25px; }
+        .btn { background: var(--main); color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; }
+        .status { float: right; font-size: 11px; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; }
+        .pending { background: #fff3cd; color: #856404; }
+        .approved { background: #d4edda; color: #155724; }
+        .bottom-nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; border-top: 1px solid #eee; padding: 10px 0; }
+        .nav-item { flex: 1; text-align: center; font-size: 11px; color: #888; cursor: pointer; }
+        .nav-item.active { color: var(--main); font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <header id="header-title">Refer Erin Dashboard</header>
+    <header id="h-title">Refer Erin Dashboard</header>
 
-    <div id="dashboard" class="tab-content active-tab">
-        <div class="card balance-card">
-            <h2 id="user-name">Welcome!</h2>
-            <div style="font-size: 2rem; font-weight: bold;">🪙 <span id="user-coins">0</span></div>
-            <p>Available Balance</p>
+    <div id="home" class="tab-content active-tab">
+        <div class="card balance-box">
+            <p>Your Balance</p>
+            <h1 id="user-coins">0</h1>
+        </div>
+        <div class="card">
+            <p>Referral Link (50 Coins Per Refer):</p>
+            <code id="ref-link" style="display:block; background:#eee; padding:10px; margin-bottom:10px; word-break:break-all;">Loading...</code>
+            <button class="btn" onclick="copyLink()">Copy Link & Invite</button>
         </div>
     </div>
 
     <div id="tasks" class="tab-content">
-        <h3>Tasks List</h3>
-        <div id="task-list">Loading...</div>
+        <h3>Available Tasks</h3>
+        <div id="task-list">Loading tasks...</div>
     </div>
 
-    <div id="withdrawal" class="tab-content">
-        <h3>Withdraw</h3>
+    <div id="wallet" class="tab-content">
         <div class="card">
-            <input type="number" id="w-amount" placeholder="Enter Coins" style="width:90%; padding:10px; margin-bottom:10px;">
-            <button class="btn" onclick="requestWithdraw()">Withdraw Now</button>
+            <h3>Withdraw</h3>
+            <input type="number" id="w-amt" placeholder="Amount (Min 1000)" style="width:94%; padding:10px; margin-bottom:10px; border:1px solid #ddd; border-radius:5px;">
+            <input type="text" id="w-upi" placeholder="UPI ID (e.g. name@upi)" style="width:94%; padding:10px; margin-bottom:10px; border:1px solid #ddd; border-radius:5px;">
+            <button class="btn" onclick="requestWithdraw()">Submit Request</button>
         </div>
-    </div>
-
-    <div id="profile" class="tab-content">
-        <div class="card" style="text-align: center;">
-            <img id="profile-pic" src="https://via.placeholder.com/80" style="border-radius: 50%; width: 80px;">
-            <h3 id="profile-name">User</h3>
-            <p id="profile-id">ID: 0000</p>
-        </div>
-        <div class="card">
-            <p><b>Your Referral Link:</b></p>
-            <code id="refer-link" style="display:block; background:#eee; padding:10px; word-break:break-all;">https://t.me/Refer_Erin_bot?start=loading</code>
-        </div>
+        <h4>History</h4>
+        <div id="w-history"></div>
     </div>
 
     <nav class="bottom-nav">
-        <div class="nav-item active" onclick="showTab('dashboard', 'Refer Erin Dashboard', this)">🏠<br>Home</div>
-        <div class="nav-item" onclick="showTab('tasks', 'Tasks', this)">📋<br>Tasks</div>
-        <div class="nav-item" onclick="showTab('withdrawal', 'Withdraw', this)">💰<br>Wallet</div>
-        <div class="nav-item" onclick="showTab('profile', 'Profile', this)">👤<br>Profile</div>
+        <div class="nav-item active" onclick="showTab('home','Dashboard',this)">🏠<br>Home</div>
+        <div class="nav-item" onclick="showTab('tasks','Tasks',this)">📋<br>Tasks</div>
+        <div class="nav-item" onclick="showTab('wallet','Withdraw',this)">💰<br>Wallet</div>
     </nav>
 
     <script>
-      const firebaseConfig = {
+              const firebaseConfig = {
   apiKey: "AIzaSyDpufywuRxIYbOFWWR2HDYdN_SDSrzvGnU",
   authDomain: "refer-erin.firebaseapp.com",
   projectId: "refer-erin",
@@ -77,135 +75,67 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const tg = window.Telegram.WebApp;
-        const user = tg.initDataUnsafe?.user || { id: "000", first_name: "Guest" };
+        tg.expand();
+        const user = tg.initDataUnsafe?.user || { id: "0000", first_name: "Guest" };
 
-        function showTab(tabId, title, el) {
+        function showTab(id, title, el) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active-tab'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active-tab');
-            document.getElementById('header-title').innerText = title;
+            document.getElementById(id).classList.add('active-tab');
+            document.getElementById('h-title').innerText = title;
             el.classList.add('active');
         }
 
-        async function syncData() {
-            const userRef = db.collection('users').doc(user.id.toString());
-            userRef.onSnapshot(doc => {
-                if(doc.exists) {
-                    const data = doc.data();
-                    document.getElementById('user-coins').innerText = data.coins || 0;
-                    document.getElementById('profile-name').innerText = data.name;
-                    document.getElementById('profile-id').innerText = "ID: " + user.id;
-                    document.getElementById('refer-link').innerText = `https://t.me/Refer_Erin_bot?start=${user.id}`;
-                } else {
-                    userRef.set({ id: user.id, name: user.first_name, coins: 0, refer: 0 });
-                }
+        // Real-time Data Sync
+        db.collection('users').doc(user.id.toString()).onSnapshot(doc => {
+            if(doc.exists){
+                document.getElementById('user-coins').innerText = doc.data().coins || 0;
+                document.getElementById('ref-link').innerText = `https://t.me/Refer_Erin_bot?start=${user.id}`;
+            }
+        });
+
+        // Load Tasks
+        db.collection('tasks').onSnapshot(snap => {
+            const list = document.getElementById('task-list');
+            list.innerHTML = '';
+            snap.forEach(doc => {
+                const t = doc.data();
+                list.innerHTML += `<div class="card"><b>${t.name}</b><br><small>Reward: ${t.reward}</small><br><br>
+                <button class="btn" onclick="window.open('${t.link}')" style="padding:5px;">Complete</button></div>`;
             });
-        }
-        syncData();
-    </script>
-</body>
-</html>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Refer Erin Bot - User Panel</title>
-    <script src="https://www.gstatic.com/firebasejs/9.1.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.1.1/firebase-firestore-compat.js"></script>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        :root { --primary: #0088cc; --bg: #f4f4f9; }
-        body { font-family: sans-serif; background: var(--bg); margin: 0; padding-bottom: 70px; }
-        header { background: var(--primary); color: white; padding: 15px; text-align: center; font-weight: bold; position: sticky; top: 0; z-index: 100; }
-        .tab-content { display: none; padding: 20px; }
-        .active-tab { display: block; }
-        .card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .balance-card { background: linear-gradient(135deg, #0088cc, #005580); color: white; text-align: center; padding: 25px; }
-        .btn { background: var(--primary); color: white; border: none; padding: 10px 15px; border-radius: 6px; width: 100%; cursor: pointer; }
-        .bottom-nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; justify-content: space-around; padding: 10px 0; border-top: 1px solid #ddd; }
-        .nav-item { text-align: center; font-size: 0.75rem; color: #888; flex: 1; cursor: pointer; }
-        .nav-item.active { color: var(--primary); }
-    </style>
-</head>
-<body>
+        });
 
-    <header id="header-title">Refer Erin Dashboard</header>
-
-    <div id="dashboard" class="tab-content active-tab">
-        <div class="card balance-card">
-            <h2 id="user-name">Welcome!</h2>
-            <div style="font-size: 2rem; font-weight: bold;">🪙 <span id="user-coins">0</span></div>
-            <p>Available Balance</p>
-        </div>
-    </div>
-
-    <div id="tasks" class="tab-content">
-        <h3>Tasks List</h3>
-        <div id="task-list">Loading...</div>
-    </div>
-
-    <div id="withdrawal" class="tab-content">
-        <h3>Withdraw</h3>
-        <div class="card">
-            <input type="number" id="w-amount" placeholder="Enter Coins" style="width:90%; padding:10px; margin-bottom:10px;">
-            <button class="btn" onclick="requestWithdraw()">Withdraw Now</button>
-        </div>
-    </div>
-
-    <div id="profile" class="tab-content">
-        <div class="card" style="text-align: center;">
-            <img id="profile-pic" src="https://via.placeholder.com/80" style="border-radius: 50%; width: 80px;">
-            <h3 id="profile-name">User</h3>
-            <p id="profile-id">ID: 0000</p>
-        </div>
-        <div class="card">
-            <p><b>Your Referral Link:</b></p>
-            <code id="refer-link" style="display:block; background:#eee; padding:10px; word-break:break-all;">https://t.me/Refer_Erin_bot?start=loading</code>
-        </div>
-    </div>
-
-    <nav class="bottom-nav">
-        <div class="nav-item active" onclick="showTab('dashboard', 'Refer Erin Dashboard', this)">🏠<br>Home</div>
-        <div class="nav-item" onclick="showTab('tasks', 'Tasks', this)">📋<br>Tasks</div>
-        <div class="nav-item" onclick="showTab('withdrawal', 'Withdraw', this)">💰<br>Wallet</div>
-        <div class="nav-item" onclick="showTab('profile', 'Profile', this)">👤<br>Profile</div>
-    </nav>
-
-    <script>
-        const firebaseConfig = { 
-            apiKey: "YOUR_API_KEY", 
-            projectId: "YOUR_PROJECT_ID", 
-            appId: "YOUR_APP_ID" 
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        const tg = window.Telegram.WebApp;
-        const user = tg.initDataUnsafe?.user || { id: "000", first_name: "Guest" };
-
-        function showTab(tabId, title, el) {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active-tab'));
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active-tab');
-            document.getElementById('header-title').innerText = title;
-            el.classList.add('active');
-        }
-
-        async function syncData() {
-            const userRef = db.collection('users').doc(user.id.toString());
-            userRef.onSnapshot(doc => {
-                if(doc.exists) {
-                    const data = doc.data();
-                    document.getElementById('user-coins').innerText = data.coins || 0;
-                    document.getElementById('profile-name').innerText = data.name;
-                    document.getElementById('profile-id').innerText = "ID: " + user.id;
-                    document.getElementById('refer-link').innerText = `https://t.me/Refer_Erin_bot?start=${user.id}`;
-                } else {
-                    userRef.set({ id: user.id, name: user.first_name, coins: 0, refer: 0 });
-                }
+        // Load Withdrawal History
+        db.collection('withdrawals').where('userId','==',user.id.toString()).onSnapshot(snap => {
+            const hist = document.getElementById('w-history');
+            hist.innerHTML = '';
+            snap.forEach(doc => {
+                const w = doc.data();
+                hist.innerHTML += `<div class="card"><b>${w.amount} Coins</b> <span class="status ${w.status}">${w.status}</span><br><small>${w.upi}</small></div>`;
             });
+        });
+
+        async function requestWithdraw() {
+            const amt = document.getElementById('w-amt').value;
+            const upi = document.getElementById('w-upi').value;
+            if(amt < 1000) return alert("Minimum 1000 coins required!");
+            if(!upi) return alert("Enter UPI ID");
+            
+            await db.collection('withdrawals').add({
+                userId: user.id.toString(),
+                amount: Number(amt),
+                upi: upi,
+                status: 'pending',
+                createdAt: new Date()
+            });
+            alert("Withdrawal request submitted!");
         }
-        syncData();
+
+        function copyLink() {
+            const link = document.getElementById('ref-link').innerText;
+            navigator.clipboard.writeText(link);
+            alert("Link Copied!");
+        }
     </script>
 </body>
 </html>
